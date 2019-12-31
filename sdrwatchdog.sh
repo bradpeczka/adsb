@@ -12,6 +12,7 @@ pushmail() {
     USER_TOKEN='x'
     TITLE="$1"
     MESSAGE="$2"
+    #curl 'https://api.pushover.net/1/messages.json' -X POST -d "token=$APP_TOKEN&user=$USER_TOKEN&message=\"$MESSAGE\"&title=\"$TITLE\""
     curl 'https://api.pushover.net/1/messages.json' -X POST -d "token=$APP_TOKEN&user=$USER_TOKEN&message=$MESSAGE&title=$TITLE\""
 }
 
@@ -23,19 +24,14 @@ journalctl -b -0 -f -n0 | grep 'No data received from the SDR for a long time' -
         do
                 date
                 systemctl kill -s 9 dump1090-fa
+                sleep .3
+                systemctl restart dump1090-fa
                 if [ $? -eq 0 ]; then
-                        sleep .3
-                        systemctl restart dump1090-fa
-                        if [ $? -eq 0 ]; then
-                                logger "dump1090-fa was successfully restarted by watchdog"
-                                pushmail Piaware RTLSDR dongle has wedged, and the watchdog successfully restarted dump1090-fa.
-                        else
-                                logger "dump1090-fa failed to restart by watchdog"
-                                pushmail Piaware RTLSDR dongle has wedged, and the watchdog could not restart dump1090-fa. Please investigate!
-                        fi
+                        logger "dump1090-fa was successfully restarted by watchdog"
+                        pushmail Piaware The watchdog successfully restarted dump1090-fa.
                 else
-                        logger "dump1090-fa is borked, we're going to restart the box"
-                        pushmail Piaware RTLSDR dongle has wedged, and dump1090-fa has hung. We're going to restart the Pi.
+                        logger "dump1090-fa failed to restart by watchdog"
+                        pushmail Piaware dump1090-fa has FAILED and could not be restarted.
                         shutdown -r now
                 fi
         done
